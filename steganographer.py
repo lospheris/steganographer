@@ -24,58 +24,57 @@ class Steganographer(object):
         outputFile -- The filename of the image that will have your information in it.
         """
 
-        self._inputFile = ""
-        self._outputFile = ""
-        self.__imageData = numpy.empty((1, 1, 1))
-        self.__colorMode = ""
-        self.__colorSize = 0
-        self.__imageSize = (0, 0)
-        self.__maxBitsStorable = 0
+        self._input_file = ""
+        self._output_file = ""
+        self.__image_data = numpy.empty((1, 1, 1))
+        self.__color_mode = ""
+        self.__color_size = 0
+        self.__image_size = (0, 0)
+        self.__max_bits_storable = 0
 
         if kwargs:
             for arg in kwargs:
                 if arg is "inputFile":
-                    self._inputFile = kwargs[arg]
+                    self._input_file = kwargs[arg]
                 elif arg is "outputFile":
-                    self._outputFile = kwargs[arg]
-
+                    self._output_file = kwargs[arg]
 
 
     #Static Methods
     @staticmethod
-    def intToBinList(number):
+    def int_to_bin_list(number):
         """
         Return the least significant 32 bits of a number as a list.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         number -- The number you would like returned as a list.
         """
 
-        listValue = []
+        list_value = []
         for i in reversed(range(32)):
             """
-            Iterate through the last 32 bits of the number passed. I sigle out
-            each bit by bitshifting the number 1 (essentially a bitmask here)
+            Iterate through the last 32 bits of the number passed. I single out
+            each bit by bit shifting the number 1 (essentially a bit mask here)
             left by the current index then bitwise anding that against the
             original number. That gives me the value of that position then I
             shift it back by the index to make sure that the bit only occupies
             the 1 bit. If you don't do that last part then python with
-            interpret it as whatever value that bitplace holds. ie if it was
+            interpret it as whatever value that bit place holds. ie if it was
             the 8 bit and it was set then you will get 8 instead of 1.
             """
-            listValue += [((1 << i) & number) >> i]
-        return listValue
+            list_value += [((1 << i) & number) >> i]
+        return list_value
 
     @staticmethod
-    def binListToInt(binList):
+    def bin_list_to_int(bin_list):
         """
         Returns the integer value of a binary list.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         binList -- A list of 1s and 0s to be assembled back into an integer.
         """
 
-        intValue = 0
+        int_value = 0
         for i in range(32):
             """
             This is pretty simple. You just get the value from the current
@@ -83,77 +82,77 @@ class Steganographer(object):
             index. Lastly you add the number created by the shift to the
             current value.
             """
-            intValue += binList[31 - i] << i
-        return intValue
+            int_value += bin_list[31 - i] << i
+        return int_value
 
     @staticmethod
-    def charToBinList(char):
+    def char_to_bin_list(char):
         """
         Return a list of 1s and 0s representing the binary of a character.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         char -- A character to be broken down into a list.
         """
 
-        intValue = ord(char)
-        listValue = []
+        int_value = ord(char)
+        list_value = []
 
         for i in reversed(range(8)):
-            listValue += [((1 << i) & intValue) >> i]
+            list_value += [((1 << i) & int_value) >> i]
 
-        return listValue
+        return list_value
 
     @staticmethod
-    def binListToChar(binList):
+    def bin_list_to_char(bin_list):
         """
         Take a binary List and turn it back into a char.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         binList -- A list of 1s and 0s to be back into a char.
         """
-        intValue = 0
+        int_value = 0
 
         for i in range(8):
-            intValue += binList[7 - i] << i
-        return chr(intValue)
+            int_value += bin_list[7 - i] << i
+        return chr(int_value)
 
     @staticmethod
-    def messageToBinList(message):
+    def message_to_bin_list(message):
         """
         Takes a message and turns it into a binary list
 
-        Manditory Arguments:
+        Mandatory Arguments:
         message -- A string to be broken down into a list of binary values.
         """
 
-        listValue = []
+        list_value = []
         for character in message:
-            listValue += Steganographer.charToBinList(character)
-        return listValue
+            list_value += Steganographer.char_to_bin_list(character)
+        return list_value
 
     @staticmethod
-    def binListToMessage(binList):
+    def bin_list_to_message(bin_list):
         """
         This turns a binary list back into a message.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         binList -- A list of 1s and 0s to be converted back into a string.
-            Must be divisable by 8.
+            Must be divisible by 8.
         """
 
-        if (len(binList) % 8) is not 0:
+        if (len(bin_list) % 8) is not 0:
             raise ValueError("The input list is required to be evenly divisable by 8")
 
-        listTmp = []
-        bitCounter = 0
+        list_tmp = []
+        bit_counter = 0
         message = ""
-        for value in range(0, len(binList)):
-            listTmp.append(binList[value])
-            if bitCounter == 7:
-                message += Steganographer.binListToChar( listTmp )
-                listTmp = []
-                bitCounter = -1
-            bitCounter += 1
+        for value in range(0, len(bin_list)):
+            list_tmp.append(bin_list[value])
+            if bit_counter == 7:
+                message += Steganographer.bin_list_to_char(list_tmp)
+                list_tmp = []
+                bit_counter = -1
+            bit_counter += 1
         return message
 
     # I "Borrowed" this wholesale from stack exchange
@@ -162,7 +161,7 @@ class Steganographer(object):
         """
         Set the index:th bit of v to x, and return the new value.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         v -- A variable in which a bit is to be changed.
         index -- The index of the bit to change.
         x -- The value to change index in variable v to.
@@ -174,14 +173,14 @@ class Steganographer(object):
         return v
 
     @staticmethod
-    def compare_pixels(imageA, imageB, pixels=512):
+    def compare_pixels(image_a, image_b, pixels=512):
         """
         Compare the specified amount of pixel data of the two pictures given.
         """
-        print("Reading " + str(pixels) + " pixels from " + imageA + " and " + imageB + ".")
+        print("Reading " + str(pixels) + " pixels from " + image_a + " and " + image_b + ".")
         try:
-            __oim = Image.open(imageA)
-            __nim = Image.open(imageB)
+            __oim = Image.open(image_a)
+            __nim = Image.open(image_b)
         except IOError:
             print("Something went wrong trying to open the pictures")
             exit(1)
@@ -214,7 +213,7 @@ class Steganographer(object):
         """
         Return the contents of a file as a string.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         filename - The filename to read the message from.
         """
 
@@ -228,11 +227,11 @@ class Steganographer(object):
         return message
 
     @staticmethod
-    def writemessagetofile(message, filename):
+    def write_message_to_file(message, filename):
         """
         Write a message, as a string, to a file.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         message - The string to be written to the file.
         filename - The name of the file to write the string to.
         """
@@ -244,106 +243,96 @@ class Steganographer(object):
         except Exception as e:
             raise e
 
-
-    # Getters/Setters
-
-    def getInputImageFile(self):
-        """Return the filename of the input image."""
-        return self._inputFile
-
-    def getOutputImageFile(self):
-        """Return the filename of the encoded image."""
-        return self._outputFile
-
     # Instance Methods
-    def initializeImageData(self):
+    def initialize_image_data(self):
         """
         This prepares the class for image manipulation.
         """
-        if self._inputFile == "":
+        if self._input_file == "":
             raise ValueError("You must supply an input file name to encode "
-                + "decode, or compare pixels.")
+                             + "decode, or compare pixels.")
         try:
-            __imageIn = Image.open(self._inputFile)
+            __imageIn = Image.open(self._input_file)
         except IOError as e:
             raise e
         except Exception as e:
             raise Exception("The following unexpect Exception was "
-                + "encountered while trying to open the input image.\n"
-                + str(e))
+                            + "encountered while trying to open the "
+                            + "input image.\n" + str(e))
         # Without the numpy.copy() the data would be read only
-        self.__imageData = numpy.copy(numpy.asarray(__imageIn))
-        self.__colorMode = __imageIn.mode
-        self.__imageSize = __imageIn.size
+        self.__image_data = numpy.copy(numpy.asarray(__imageIn))
+        self.__color_mode = __imageIn.mode
+        self.__image_size = __imageIn.size
         __imageIn.close()
 
         # Set color size
-        if self.__colorMode == "RGB":
-            self.__colorSize = 3
-        elif self.__colorMode == "RGBA":
+        if self.__color_mode == "RGB":
+            self.__color_size = 3
+        elif self.__color_mode == "RGBA":
             # Don't encode to the alpha value
-            self.__colorSize = 3
-        elif self.__colorMode == "CMYK":
-            self.__colorSize = 4
-        elif self.__colorMode == "YCbCr":
-            self.__colorSize = 4
+            self.__color_size = 3
+        elif self.__color_mode == "CMYK":
+            self.__color_size = 4
+        elif self.__color_mode == "YCbCr":
+            self.__color_size = 4
         else:
-            raise ValueError("The input image " + self._inputFile +
-                             " cntains an unsupported color model.")
+            raise ValueError("The input image " + self._input_file +
+                             " contains an unsupported color model.")
 
         # Calculate the maximum number of bits we'll be able to store.
-        self.__maxBitsStorable = self.__imageSize[0] * self.__imageSize[1]
-        self.__maxBitsStorable *= self.__colorSize
+        self.__max_bits_storable = self.__image_size[0] * self.__image_size[1]
+        self.__max_bits_storable *= self.__color_size
 
-    def saveOutputImage(self):
+    def save_output_image(self):
         """Save the stored image data to file"""
 
-        __imageOut = Image.fromarray(self.__imageData)
+        __imageOut = Image.fromarray(self.__image_data)
         try:
-            __imageOut.save(self._outputFile, 'PNG', compress_level=0)
+            __imageOut.save(self._output_file, 'PNG', compress_level=0)
         except IOError as e:
             raise e
         except Exception as e:
             raise Exception("The encoding function encountered the following "
-                + "unhandled exception while attempting to save the image.\n"
-                + str(e))
+                            + "unhandled exception while attempting to save "
+                            + "the image.\n" + str(e))
         # Close the image. I don't know if this is explicitly necessary but feels right. Ya know?
         __imageOut.close()
 
         # Sing songs of our success
-        print("Image encode and saved as " + self._outputFile)
+        print("Image encode and saved as " + self._output_file)
 
-    def encodeImage(self, message):
+    def encode_image(self, message):
         """
-        Enocde a message into a picture.
+        Encode a message into a picture.
         """
 
         __message = message
         # Error Handling
-        if self._outputFile == "":
+        if self._output_file == "":
             raise ValueError("No output filename specified. Please specify"
-                + " a filename and call encodeImage() again.")
-        if self.__imageData.shape == (1, 1, 1):
+                             + " a filename and call encode_image() again.")
+        if self.__image_data.shape == (1, 1, 1):
             """Uninitialized image or smallest image ever."""
             try:
-                self.initializeImageData()
+                self.initialize_image_data()
             except Exception as e:
                 raise e
         if __message == "":
             raise ValueError("Message not set. Please set message and"
-                + " call encodeImage() again.")
+                             + " call encode_image() again.")
 
-        __bitSequence = Steganographer.intToBinList(len(__message))
-        __bitSequence += Steganographer.messageToBinList(__message)
+        __bit_sequence = Steganographer.int_to_bin_list(len(__message))
+        __bit_sequence += Steganographer.message_to_bin_list(__message)
 
         # Pad the message
-        __padSize = self.__colorSize - ( len(__bitSequence) % self.__colorSize)
+        __padSize = self.__color_size - (len(__bit_sequence) % self.__color_size)
         for i in range(0, __padSize):
-            __bitSequence += [0]
+            __bit_sequence += [0]
 
-        if len(__bitSequence) >= self.__maxBitsStorable:
+        if len(__bit_sequence) >= self.__max_bits_storable:
             raise ValueError("The message or message file provided was too "
-                + "to be encoded onto image " + self._inputFile + ".")
+                             + "to be encoded onto image " + self._input_file
+                             + ".")
 
         """
         I am pretty sure this formatting is more levels than I can count
@@ -354,161 +343,161 @@ class Steganographer(object):
         __bitIndex = 0
         __bitList = [0, 0, 0]
         try:
-            for heightIndex in range(0, self.__imageSize[0]):
+            for heightIndex in range(0, self.__image_size[0]):
 
-                for widthIndex in range(0, self.__imageSize[1]):
+                for widthIndex in range(0, self.__image_size[1]):
 
-                    for colorIndex in range(0, self.__colorSize):
+                    for colorIndex in range(0, self.__color_size):
 
-                        if __bitIndex >= len(__bitSequence):
+                        if __bitIndex >= len(__bit_sequence):
                             raise Exception("Done!")
                         else:
                             __bitList[colorIndex] = Steganographer.set_bit(
-                                self.__imageData[widthIndex][heightIndex][colorIndex],
+                                self.__image_data[widthIndex][heightIndex][colorIndex],
                                 0,
-                                __bitSequence[__bitIndex])
+                                __bit_sequence[__bitIndex])
                             __bitIndex += 1
 
-                    self.__imageData[widthIndex][heightIndex] = __bitList
+                    self.__image_data[widthIndex][heightIndex] = __bitList
                     __bitList = [0, 0, 0]
-        except Exception as e:
+        except Exception:
             pass
         try:
-            self.saveOutputImage()
-        except Exception as e:
+            self.save_output_image()
+        except IOError as e:
             raise e
 
-    def decodeImage(self):
+    def decode_image(self):
 
-        if self.__imageData.shape == (1, 1, 1):
+        if self.__image_data.shape == (1, 1, 1):
             try:
-                self.initializeImageData()
-            except Exception as e:
+                self.initialize_image_data()
+            except IOError as e:
                 raise e
 
         #create a list to get the number of bits in the message
-        __lenList = []
+        __len_list = []
 
         #This shit...
-        #There are 32 bits (Intiger presumably, Python is a little willy-nilly
-        # on primative types) of length data at the beginning of the encoding
+        #There are 32 bits (Integer presumably, Python is a little willy-nilly
+        # on primitive types) of length data at the beginning of the encoding
         # 32/3 = 10 with 2 bits left over. So I need the first 10 pixels worth
         # of LSBs and the Red and Green LSB out of the 11th pixel. So, I
         # iterate through all 11 and on the 11th pixel I store normally until
         # I hit the Blue value, then I just pass which ends both loops.
         try:
-            __bitIndex = 0
-            for heightIndex in range(0, self.__imageSize[0]):
-                for widthIndex in range(0, self.__imageSize[1]):
-                    for colorIndex in range(0, self.__colorSize):
-                        if __bitIndex >= 32:
+            __bit_index = 0
+            for heightIndex in range(0, self.__image_size[0]):
+                for widthIndex in range(0, self.__image_size[1]):
+                    for colorIndex in range(0, self.__color_size):
+                        if __bit_index >= 32:
                             raise Exception("Done!")
                         else:
-                            __lenList.append(self.__imageData[widthIndex][heightIndex][colorIndex] & 1)
-                            __bitIndex += 1
+                            __len_list.append(self.__image_data[widthIndex][heightIndex][colorIndex] & 1)
+                            __bit_index += 1
         except Exception as e:
             pass
         #Now we know how many bits to expect so we convert that back into an Int and store it for later
-        __messageLength = Steganographer.binListToInt(__lenList)
+        __message_length = Steganographer.bin_list_to_int(__len_list)
 
         #I found it was easier on me to just store the entire with the length data at first.
         # Also, to make the encoding loop easier I padded the end of it so it would be evenly
-        # divisable by the number of colors in the image. Here I will just grab everything
+        # divisible by the number of colors in the image. Here I will just grab everything
         # out of the picture all at once and store it in total list. Then I will use the message
         # length information to iterate through only the message bits so I don't have to do any
         # silly shit in the inner for loop here to weed out the length/padding data.
-        __totalList = []
+        __total_list = []
 
         #I stored the message length in characters which are 8 bits a piece. However, I work mostly
         # in number of bits instead of bytes so I
         # have to convert it off of the bat.
-        __messageBitLength = __messageLength * 8
+        __message_bit_length = __message_length * 8
 
         #Iterate through all of the bits that I believe were encoded onto the image.
         try:
-            __bitsProcessed = 0
-            for heightIndex in range(0, self.__imageSize[0]):
+            __bits_processed = 0
+            for heightIndex in range(0, self.__image_size[0]):
 
-                for widthIndex in range( 0, self.__imageSize[1]):
+                for widthIndex in range(0, self.__image_size[1]):
 
-                    for colorIndex in range( 0, self.__colorSize):
+                    for colorIndex in range(0, self.__color_size):
 
-                        if __bitsProcessed >= (__messageBitLength + 32):
+                        if __bits_processed >= (__message_bit_length + 32):
                             raise Exception("Done!")
                         else:
-                            __totalList.append(
-                                self.__imageData[widthIndex][heightIndex][colorIndex] & 1)
-                            __bitsProcessed += 1
+                            __total_list.append(
+                                self.__image_data[widthIndex][heightIndex][colorIndex] & 1)
+                            __bits_processed += 1
 
         except Exception as e:
             pass
 
-        #create a list to store the message bitsequence
-        __messageList = []
+        #create a list to store the message bit sequence
+        __message_list = []
 
-        print(len(__totalList))
+        print(len(__total_list))
         #Iterate from the end to the end of the message data. So the message will always start
         # at the 33nd (decimal value 32) bit because the length data is 32 bits long. Then if the
         # message is x long we want to count from 32 to x + 32 since the message data will essentially
         # be offset in the picture by 32 bits. This also leaves out the padding data because we are
         # only iterating to the end of the message data exactly so the padding will be left out of the
         # message. That is good because the bitStringToMessage function will return and error string
-        # if the message data isn't cleanly divisable by 8. Which it wouldn't be with the padding.
-        for index in range(32, __messageBitLength + 32):
-            __messageList.append(__totalList[ index ])
+        # if the message data isn't cleanly divisible by 8. Which it wouldn't be with the padding.
+        for index in range(32, __message_bit_length + 32):
+            __message_list.append(__total_list[index])
 
         #Convert the message from a list of binary values do a string
-        __message = Steganographer.binListToMessage(__messageList)
+        __message = Steganographer.bin_list_to_message(__message_list)
 
         return __message
 
-    def encodeimagefromfile(self, filename):
+    def encode_image_from_file(self, filename):
         """
         This function will open a file, read the contents, then pass the
-        contents as a message to encodeImage.
+        contents as a message to encode_image.
 
         Manditory Arguments:
         filename - The name of the file containing the message.
         """
 
         try:
-            __message = Steganographer.readmessagefromfile(filename)
+            __message = Steganographer.read_message_from_file(filename)
         except IOError:
             print("The file " + filename + " could not be read.")
             return
 
-        self.encodeImage(__message)
+        self.encode_image(__message)
 
-    def decodeimagetofile(self, filename):
+    def decode_image_to_file(self, filename):
         """
         This function will decode the message in an image and dump the
         message into a file.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         filename - The name of the file to save the message to.
         """
 
-        __message = self.decodeImage()
+        __message = self.decode_image()
         try:
-            Steganographer.writemessagetofile(__message, filename)
+            Steganographer.write_message_to_file(__message, filename)
         except IOError:
-            print("There was a problem opening the file " + filename +
-                ".")
+            print("There was a problem opening the file " + filename
+                  + ".")
             return
         print("Message saved to " + filename + ".")
+
 
 class EncryptedSteganographer(Steganographer):
     """
     This subclass of the Steganographer class adds encryption to the message.
     It requires that the intended recipient's public key and the sender's RSA
-    keypair be provided. It will then generate a symmetric key to encrypt the
+    key pair be provided. It will then generate a symmetric key to encrypt the
     actual message data with. The symmetric key, the sender's public key, a
     signature of the message, and the encrypted message with CBC IV attached
     will be encoded into the picture. It is likewise able to decode and
-    decrypt messages embeded in a picture. To do so it requires the
-    recipient's RSA keypair.
+    decrypt messages embedded in a picture. To do so it requires the
+    recipient's RSA key pair.
     """
-
 
     def __init__(self, **kwargs):
         """
@@ -519,56 +508,86 @@ class EncryptedSteganographer(Steganographer):
             information in.
         outputFile -- The filename of the image that will have your
             information in it.
-        message -- A string message.
-        messageFile -- The filename of a (text)file you which to embed
-            into inputFile and save as outputFile.
         recipientPublicKeyFileName -- The file name of the recipient's public
             key.
-        sendersKeyPairFileName -- The file name of the sender's RSA keypair.
-        passphrase -- The passphrase for the senders keypair. Unprotected
-            keypairs will not be supported.
+        sendersKeyPairFileName -- The file name of the sender's RSA key pair.
+        passphrase -- The passphrase for the senders key pair. Unprotected
+            key pairs will not be supported.
         """
 
         try:
-            self._recipPubKeyFileName = kwargs.pop("recipientPublicKeyFileName")
-        except KeyError:
-            print("A public key was not provided so encryption will not" +
-                "be possible.")
+            self._recipient_public_key_filename = kwargs.pop("recipientPublicKeyFileName")
+        except KeyError as e:
+            raise e
         try:
-            self._senderKeyFileName = kwargs.pop("sendersKeyPairFileName")
+            self._senders_key_pair_filename = kwargs.pop("sendersKeyPairFileName")
             self._passphrase = kwargs.pop("passphrase")
-        except KeyError:
-            print("A private keypair and a passphrase MUST be provided to" +
-                " initialize an EncryptedSteganographer object!")
+        except KeyError as e:
+            raise e
         super(EncryptedSteganographer, self).__init__(**kwargs)
 
-    def encryptAndEncodeMessage(self):
+    def encrypt_and_encode_message(self, message):
         """
         This function will encrypt a message and encode it onto an image.
         """
 
-        self._message = CryptoHelper.encryptMessage(self._message,
-            self._recipPubKeyFileName, self._senderKeyFileName,
-            self._passphrase).dumpMessage()
+        __message = CryptoHelper.encryptMessage(message,
+                                                self._recipient_public_key_filename,
+                                                self._senders_key_pair_filename,
+                                                self._passphrase).dumpMessage()
 
-        self.encodeImage()
+        self.encode_image(__message)
 
-    def decryptAndDecodeMessage(self):
+    def encrypt_and_encode_message_from_file(self, message_file):
+        """
+        This function will encrypt a message and encode it onto an image.
+        """
+
+        try:
+            __message = Steganographer.read_message_from_file(message_file)
+        except IOError as e:
+            raise e
+        __message = CryptoHelper.encryptMessage(__message,
+                                                self._recipient_public_key_filename,
+                                                self._senders_key_pair_filename,
+                                                self._passphrase).dumpMessage()
+        self.encode_image(__message)
+
+    def decrypt_and_decode_message(self):
         """
         This Method will decode an image with a message in it and then,
         decrypt that message.
         """
 
+        __message = ""
         try:
-            self.decodeImage()
+            __message = self.decode_image()
         except Exception as e:
             print(e)
-        self._message = CryptoHelper.decryptMessage(
-            Message.loadMessage(self._message), self._senderKeyFileName,
+        __message = CryptoHelper.decryptMessage(
+            Message.loadMessage(__message), self._senders_key_pair_filename,
             self._passphrase)
 
-        print( "Message: " + self._message )
-        return self._message
+        return __message
+
+    def decrypt_and_decode_message_to_file(self, message_file):
+        """
+        This Method will decode an image with a message in it and then,
+        decrypt that message.
+        """
+
+        __message = ""
+        try:
+            __message = self.decode_image()
+        except Exception as e:
+            raise e
+        __message = CryptoHelper.decryptMessage(
+            Message.loadMessage(__message), self._senders_key_pair_filename,
+            self._passphrase)
+        try:
+            Steganographer.write_message_to_file(__message, message_file)
+        except IOError as e:
+            raise e
 
 if __name__ == "__main__":
 
@@ -578,9 +597,9 @@ if __name__ == "__main__":
     epilog_string = "Thank you for using steganographer!"
 
 
-    #If we are being executed independantly then parse the necessary arguments.
+    #If we are being executed independently then parse the necessary arguments.
     parser = argparse.ArgumentParser(description=description_string,
-                                    epilog=epilog_string)
+                                     epilog=epilog_string)
     parser.add_argument("--inputimage","-ii",
                         help="The to encode the message onto or the encoded" +
                         " image if decoding.")
@@ -625,12 +644,35 @@ if __name__ == "__main__":
             exit(1)
         elif args.modulus:
             CryptoHelper.generateKeys(args.generate, args.passphrase,
-                                        args.modulus)
+                                      args.modulus)
         else:
             CryptoHelper.generateKeys(args.generate, args.passphrase)
     elif args.encode:
         if args.crypto:
+            if (not args.inputimage or not args.outputimage
+                or not(args.message or args.inputfile)or not
+                args.encryptionkey or not args.signingkey or not args.passphrase):
+                steg = EncryptedSteganographer(inputFile=args.inputimage,
+                                                outputfile=args.outputimage,
+                                                message=args.message,
+                                                recipientPublicKeyFileName=args.encryptionkey,
+                                                sendersKeyPairFileName=args.signingkey,
+                                                passphrase=args.passphrase)
+                try:
+                    if args.inputfile:
+                       steg.encrypt_and_encode_message_from_file(args.inputfile)
+                    else:
+                        steg.encrypt_and_encode_message(args.message)
+                except IOError as e:
+                    print("Something went wrong opening a file.")
+                    print(e)
+                    exit(1)
+        else:
             pass
+
+
+
+
     elif args.decode:
         pass
     else:

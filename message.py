@@ -1,13 +1,11 @@
 __author__ = "Dell-Ray Sackett"
 __version__ = "0.1"
 import pickle
-from Crypto import Random
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Cipher import AES
 from Crypto import Random
 import base64
-import binascii
 
 
 class Message:

@@ -112,7 +112,7 @@ class CryptoHelper:
         try:
             keyfile = open(filename, "w")
             pubkeyFile = open(filename[:len(filename)-4] + 
-                "publiconly.pem", "w")
+                "_publiconly.pem", "w")
             
         except Exception as e:
             raise e

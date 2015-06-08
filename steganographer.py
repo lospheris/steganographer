@@ -296,7 +296,7 @@ class Steganographer(object):
         __imageOut.close()
 
         # Sing songs of our success
-        print("Image encode and saved as " + self._output_file)
+        print("Image encoded and saved as " + self._output_file)
 
     def encode_image(self, message):
         """
@@ -432,7 +432,7 @@ class Steganographer(object):
         #create a list to store the message bit sequence
         __message_list = []
 
-        print(len(__total_list))
+        #print(len(__total_list))
         #Iterate from the end to the end of the message data. So the message will always start
         # at the 33nd (decimal value 32) bit because the length data is 32 bits long. Then if the
         # message is x long we want to count from 32 to x + 32 since the message data will essentially

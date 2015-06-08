@@ -255,10 +255,7 @@ class Steganographer(object):
             __imageIn = Image.open(self._input_file)
         except IOError as e:
             raise e
-        except Exception as e:
-            raise Exception("The following unexpect Exception was "
-                            + "encountered while trying to open the "
-                            + "input image.\n" + str(e))
+        
         # Without the numpy.copy() the data would be read only
         self.__image_data = numpy.copy(numpy.asarray(__imageIn))
         self.__color_mode = __imageIn.mode
@@ -517,13 +514,15 @@ class EncryptedSteganographer(Steganographer):
 
         try:
             self._recipient_public_key_filename = kwargs.pop("recipientPublicKeyFileName")
-        except KeyError as e:
-            raise e
+        except KeyError:
+            raise KeyError("The recipientPublicKeyFileName argument is required " +
+                "to initialize an EncryptedSteganographer.")
         try:
             self._senders_key_pair_filename = kwargs.pop("sendersKeyPairFileName")
             self._passphrase = kwargs.pop("passphrase")
-        except KeyError as e:
-            raise e
+        except KeyError:
+            raise KeyError("The passphrase and sendersKeyPairFileName arguments " +
+                "are required to initialize an EncryptedSteganographer")
         super(EncryptedSteganographer, self).__init__(**kwargs)
 
     def encrypt_and_encode_message(self, message):
@@ -630,7 +629,7 @@ if __name__ == "__main__":
                         help="The asymmetric key to use for signing.")
     parser.add_argument("--passphrase", "-p",
                         help="The passphrase to the singing key.")
-    parser.add_argument("--modulus", "-m", help="Key modulus size.")
+    parser.add_argument("--modulus", "-md", help="Key modulus size.")
 
 
     parser.add_argument("--comparefiles", "-c",
@@ -638,6 +637,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     steg = None
+    plain_text_message = ""
     if args.generate:
         if not args.passphrase:
             print("A passphrase for the key must be provided.")
@@ -650,34 +650,110 @@ if __name__ == "__main__":
     elif args.encode:
         if args.crypto:
             if (not args.inputimage or not args.outputimage
-                or not(args.message or args.inputfile)or not
+                or not(args.message or args.inputfile) or not
                 args.encryptionkey or not args.signingkey or not args.passphrase):
-                steg = EncryptedSteganographer(inputFile=args.inputimage,
+                try:
+                    steg = EncryptedSteganographer(inputFile=args.inputimage,
                                                 outputfile=args.outputimage,
-                                                message=args.message,
                                                 recipientPublicKeyFileName=args.encryptionkey,
                                                 sendersKeyPairFileName=args.signingkey,
                                                 passphrase=args.passphrase)
+                except KeyError as e:
+                    print("The following error has occured: ")
+                    print(e)
+                    exit(1)
                 try:
                     if args.inputfile:
                        steg.encrypt_and_encode_message_from_file(args.inputfile)
                     else:
                         steg.encrypt_and_encode_message(args.message)
                 except IOError as e:
-                    print("Something went wrong opening a file.")
+                    print("The following Error was encountered opening the " +
+                          "message file.")
                     print(e)
                     exit(1)
+            else:
+                args.print_help()
         else:
-            pass
-
-
-
-
+            if (not args.inputimage or not args.outputimage
+                or not(args.message or args.inputfile)):
+                    try:
+                        steg = Steganographer(inputFile=args.inputimage,
+                                              outputFile=args.outputimage)
+                    except KeyError as e:
+                        print("The following error occured: ")
+                        print(e)
+                        exit(1)
+                    try:
+                        if args.inputfile:
+                            steg.encode_image_from_file(args.inputfile)
+                        else:
+                            steg.encode_image(args.message)
+                    except IOError as e:
+                        print("The following error occured: ")
+                        print(e)
+                        exit(1)
+            else:
+                args.print_help()
     elif args.decode:
-        pass
+        if args.crypto:
+            if (not args.inputimage or not args.outputimage
+                or not args.encryptionkey or not args.signingkey 
+                or not args.passphrase):
+                try:
+                    steg = EncryptedSteganographer(inputFile=args.inputimage,
+                                                   recipientPublicKeyFileName=args.encryptionkey,
+                                                   sendersKeyPairFileName=args.signingkey,
+                                                   passphrase=args.passphrase)
+                except KeyError as e:
+                    print("The following error has occured: ")
+                    print(e)
+                    exit(1)
+                try:
+                    if args.outputfile:
+                        steg.decrypt_and_decode_message_to_file(args.outputfile)
+                        print("Message successfully written to " +
+                               args.outputfile + ".")
+                        exit(0)
+                    else:
+                        print("Message:\n")
+                        print(steg.decrypt_and_decode_message())
+                        exit(0)
+                except IOError as e:
+                    print("The following error was encountered: ")
+                    print(e)
+                    exit(1)
+            else:
+                args.print_help()
+                exit(1)
+        else:
+            if (not args.inputimage or not args.outputimage):
+                try:
+                    steg = Steganographer(inputFile=args.inputimage)
+                except KeyError as e:
+                    print("The following error has occured: ")
+                    print(e)
+                    exit(1)
+                try:
+                    if args.outputfile:
+                        steg.decode_image_to_file(args.outputfile)
+                        print("Message successfully written to " +
+                               args.outputfile + ".")
+                        exit(0)
+                    else:
+                        print("Message:\n")
+                        print(steg.decode())
+                        exit(0)
+                except IOError as e:
+                    print("The following error was encountered: ")
+                    print(e)
+                    exit(1)
+            else:
+                args.print_help()
+                exit(1)
     else:
-        args.print_help()
-        exit(0)
+        parser.print_help()
+        exit(1)
 
     #Things went better than expected
     exit(0)

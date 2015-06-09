@@ -138,6 +138,10 @@ class Steganographer(object):
         Mandatory Arguments:
         binList -- A list of 1s and 0s to be converted back into a string.
             Must be divisible by 8.
+            
+        Exceptions:
+        ValueError -- This will be raised if the input bit_list is not evenly
+            divisable by 8. 
         """
 
         if (len(bin_list) % 8) is not 0:
@@ -176,13 +180,24 @@ class Steganographer(object):
     def compare_pixels(image_a, image_b, pixels=512):
         """
         Compare the specified amount of pixel data of the two pictures given.
+        
+        Manditory Arguments:
+        image_a -- The first image filename.
+        image_b -- The second image filename.
+        
+        Optional Arguments:
+        pixels -- The number of pixels to compare.
+        
+        Exceptions:
+        IOError -- This is raised if there is a problem opening one of the 
+            input image files.
         """
         print("Reading " + str(pixels) + " pixels from " + image_a + " and " + image_b + ".")
         try:
             __oim = Image.open(image_a)
             __nim = Image.open(image_b)
-        except IOError:
-            print("Something went wrong trying to open the pictures")
+        except IOError as e:
+            raise e
             exit(1)
 
         __oimd = numpy.asarray(__oim)
@@ -214,7 +229,10 @@ class Steganographer(object):
         Return the contents of a file as a string.
 
         Mandatory Arguments:
-        filename - The filename to read the message from.
+        filename -- The filename to read the message from.
+        
+        Exceptions:
+        IOError -- This is raised if the message file cannot be opened.
         """
 
         try:
@@ -223,7 +241,8 @@ class Steganographer(object):
             message = fd.read()
             fd.close()
         except IOError as e:
-            raise e
+            raise IOError("The following error was encountered opening the " +
+                          "message file: " + e.message)
         return message
 
     @staticmethod
@@ -234,19 +253,30 @@ class Steganographer(object):
         Mandatory Arguments:
         message - The string to be written to the file.
         filename - The name of the file to write the string to.
+        
+        Exceptions:
+        IOError -- This is raised if the file to write the message to could not
+            be opened.
         """
 
         try:
             fd = open(filename, "w")
             fd.write(message)
             fd.close()
-        except Exception as e:
-            raise e
+        except IOError as e:
+            raise IOError("The following error was encountered opening the " +
+                          "message file: " + e.message)
 
     # Instance Methods
     def initialize_image_data(self):
         """
         This prepares the class for image manipulation.
+        
+        Exceptions:
+        IOError -- This is raised if there is a problem opening the image.
+        ValueError -- This is raised if the input filename is empty.
+        ValueError -- This is raised if the image supplied has an unsupported
+            color model.
         """
         if self._input_file == "":
             raise ValueError("You must supply an input file name to encode "
@@ -281,26 +311,49 @@ class Steganographer(object):
         self.__max_bits_storable *= self.__color_size
 
     def save_output_image(self):
-        """Save the stored image data to file"""
+        """Save the stored image data to file.
+        
+        Exceptions:
+        IOError -- Raised if the output file could not be opened.
+        """
 
         __imageOut = Image.fromarray(self.__image_data)
         try:
             __imageOut.save(self._output_file, 'PNG', compress_level=0)
         except IOError as e:
-            raise e
-        except Exception as e:
-            raise Exception("The encoding function encountered the following "
-                            + "unhandled exception while attempting to save "
-                            + "the image.\n" + str(e))
+            raise IOError("The following error was encountered while attempting"
+                          + " to save the output image: " + e.message )
+        # It should be noted that I have left out the KeyError Exception that
+        #can be raised by the Image.save() method. Per the documentation this 
+        #exception can be safely ignored if the format option is provided to the
+        #save function. I have explicitly defined the format option so I am not
+        #checking for the Exception.
+            
         # Close the image. I don't know if this is explicitly necessary but feels right. Ya know?
         __imageOut.close()
 
         # Sing songs of our success
         print("Image encoded and saved as " + self._output_file)
 
-    def encode_image(self, message):
+    def encode_message(self, message):
         """
         Encode a message into a picture.
+        
+        Manditory Arguments:
+        message -- The message to be encoded into the image.
+        
+        Exceptions:
+        IOError -- Raised from save_output_image if there was a problem saving
+            the output image.
+        IOError -- Raised from initialize_image_data if the input image file 
+            could not be opened.
+        ValueError -- Raised if the outputFile name is blank.
+        ValueError -- Raised if the message argument is a blank string.
+        ValueError -- Raised if the message is too large for the supplied image.
+        ValueError -- Raised from initialize_image_data if the input filename
+            is blank.
+        ValueError -- Raised from initialize_image_data if the color model of 
+            input picture is unsupported by Steganographer.
         """
 
         __message = message
@@ -312,7 +365,9 @@ class Steganographer(object):
             """Uninitialized image or smallest image ever."""
             try:
                 self.initialize_image_data()
-            except Exception as e:
+            except ValueError as e:
+                raise e
+            except IOError as e:
                 raise e
         if __message == "":
             raise ValueError("Message not set. Please set message and"
@@ -328,8 +383,8 @@ class Steganographer(object):
 
         if len(__bit_sequence) >= self.__max_bits_storable:
             raise ValueError("The message or message file provided was too "
-                             + "to be encoded onto image " + self._input_file
-                             + ".")
+                             + "large to be encoded onto image " 
+                             + self._input_file + ".")
 
         """
         I am pretty sure this formatting is more levels than I can count
@@ -364,12 +419,25 @@ class Steganographer(object):
         except IOError as e:
             raise e
 
-    def decode_image(self):
+    def decode_message(self):
+        """
+        This method will decode a message that is embedded in an image.
+        
+        Exceptions:
+        IOError -- Raised from initialize_image_data if the input image file 
+            could not be opened.
+        ValueError -- Raised from initialize_image_data if the input filename
+            is blank.
+        ValueError -- Raised from initialize_image_data if the color model of 
+            input picture is unsupported by Steganographer.
+        """
 
         if self.__image_data.shape == (1, 1, 1):
             try:
                 self.initialize_image_data()
             except IOError as e:
+                raise e
+            except ValueError as e:
                 raise e
 
         #create a list to get the number of bits in the message
@@ -448,39 +516,76 @@ class Steganographer(object):
 
         return __message
 
-    def encode_image_from_file(self, filename):
+    def encode_message_from_file(self, filename):
         """
         This function will open a file, read the contents, then pass the
         contents as a message to encode_image.
 
         Manditory Arguments:
         filename - The name of the file containing the message.
+        
+        Exceptions:
+        IOError -- Raised from read_message_from_file if the message file 
+            cannot be read.
+        IOError -- Raised from save_output_image through encode_message if there
+        was a problem saving the output image.
+        IOError -- Raised from initialize_image_data through encode_message if 
+            the input image file could not be opened.
+        ValueError -- Raised from encode_message if the outputFile name is 
+            blank.
+        ValueError -- Raised from encode_message if the message argument is a 
+            blank string.
+        ValueError -- Raised from encode_message if the message is too large for
+            the supplied image.
+        ValueError -- Raised from initialize_image_data through encode_message 
+            if the input filename is blank.
+        ValueError -- Raised from initialize_image_data through encode_message
+            if the color model of input picture is unsupported by 
+            Steganographer.
         """
 
         try:
             __message = Steganographer.read_message_from_file(filename)
-        except IOError:
-            print("The file " + filename + " could not be read.")
+        except IOError as e:
+            raise e
             return
+        
+        try:
+            self.encode_message(__message)
+        except IOError as e:
+            raise e
+        except ValueError as e:
+            raise e
 
-        self.encode_image(__message)
-
-    def decode_image_to_file(self, filename):
+    def decode_message_to_file(self, filename):
         """
         This function will decode the message in an image and dump the
         message into a file.
 
         Mandatory Arguments:
         filename - The name of the file to save the message to.
+        
+        Exceptions:
+        IOError -- Raised from initialize_image_data through decode_message if 
+            the input image file could not be opened.
+        ValueError -- Raised from initialize_image_data through decode_message 
+            if the input filename is blank.
+        ValueError -- Raised from initialize_image_data through decode_message 
+            if the color model of input picture is unsupported by Steganographer.
         """
 
-        __message = self.decode_image()
+        try:
+            __message = self.decode_message()
+        except IOError as e:
+            raise e
+        except ValueError as e:
+            raise e
+            
         try:
             Steganographer.write_message_to_file(__message, filename)
-        except IOError:
-            print("There was a problem opening the file " + filename
-                  + ".")
-            return
+        except IOError as e:
+            raise e
+
         print("Message saved to " + filename + ".")
 
 
@@ -535,7 +640,7 @@ class EncryptedSteganographer(Steganographer):
                                                 self._senders_key_pair_filename,
                                                 self._passphrase).dumpMessage()
 
-        self.encode_image(__message)
+        self.encode_message(__message)
 
     def encrypt_and_encode_message_from_file(self, message_file):
         """
@@ -550,7 +655,7 @@ class EncryptedSteganographer(Steganographer):
                                                 self._recipient_public_key_filename,
                                                 self._senders_key_pair_filename,
                                                 self._passphrase).dumpMessage()
-        self.encode_image(__message)
+        self.encode_message(__message)
 
     def decrypt_and_decode_message(self):
         """
@@ -560,7 +665,7 @@ class EncryptedSteganographer(Steganographer):
 
         __message = ""
         try:
-            __message = self.decode_image()
+            __message = self.decode_message()
         except Exception as e:
             print(e)
         __message = CryptoHelper.decryptMessage(
@@ -577,7 +682,7 @@ class EncryptedSteganographer(Steganographer):
 
         __message = ""
         try:
-            __message = self.decode_image()
+            __message = self.decode_message()
         except Exception as e:
             raise e
         __message = CryptoHelper.decryptMessage(
@@ -686,9 +791,9 @@ if __name__ == "__main__":
                         exit(1)
                     try:
                         if args.inputfile:
-                            steg.encode_image_from_file(args.inputfile)
+                            steg.encode_message_from_file(args.inputfile)
                         else:
-                            steg.encode_image(args.message)
+                            steg.encode_message(args.message)
                     except IOError as e:
                         print("The following error occured: ")
                         print(e)
@@ -736,13 +841,13 @@ if __name__ == "__main__":
                     exit(1)
                 try:
                     if args.outputfile:
-                        steg.decode_image_to_file(args.outputfile)
+                        steg.decode_message_to_file(args.outputfile)
                         print("Message successfully written to " +
                                args.outputfile + ".")
                         exit(0)
                     else:
                         print("Message:\n")
-                        print(steg.decode())
+                        print(steg.decode_message())
                         exit(0)
                 except IOError as e:
                     print("The following error was encountered: ")

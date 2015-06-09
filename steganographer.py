@@ -39,8 +39,7 @@ class Steganographer(object):
                 elif arg is "outputFile":
                     self._output_file = kwargs[arg]
 
-
-    #Static Methods
+    # Static Methods
     @staticmethod
     def int_to_bin_list(number):
         """
@@ -198,7 +197,6 @@ class Steganographer(object):
             __nim = Image.open(image_b)
         except IOError as e:
             raise e
-            exit(1)
 
         __oimd = numpy.asarray(__oim)
         __nimd = numpy.asarray(__nim)
@@ -285,7 +283,7 @@ class Steganographer(object):
             __imageIn = Image.open(self._input_file)
         except IOError as e:
             raise e
-        
+
         # Without the numpy.copy() the data would be read only
         self.__image_data = numpy.copy(numpy.asarray(__imageIn))
         self.__color_mode = __imageIn.mode
@@ -322,13 +320,13 @@ class Steganographer(object):
             __imageOut.save(self._output_file, 'PNG', compress_level=0)
         except IOError as e:
             raise IOError("The following error was encountered while attempting"
-                          + " to save the output image: " + e.message )
+                          + " to save the output image: " + e.message)
         # It should be noted that I have left out the KeyError Exception that
-        #can be raised by the Image.save() method. Per the documentation this 
-        #exception can be safely ignored if the format option is provided to the
-        #save function. I have explicitly defined the format option so I am not
-        #checking for the Exception.
-            
+        # can be raised by the Image.save() method. Per the documentation this
+        # exception can be safely ignored if the format option is provided to the
+        # save function. I have explicitly defined the format option so I am not
+        # checking for the Exception.
+
         # Close the image. I don't know if this is explicitly necessary but feels right. Ya know?
         __imageOut.close()
 
@@ -339,7 +337,7 @@ class Steganographer(object):
         """
         Encode a message into a picture.
         
-        Manditory Arguments:
+        Mandatory Arguments:
         message -- The message to be encoded into the image.
         
         Exceptions:
@@ -383,7 +381,7 @@ class Steganographer(object):
 
         if len(__bit_sequence) >= self.__max_bits_storable:
             raise ValueError("The message or message file provided was too "
-                             + "large to be encoded onto image " 
+                             + "large to be encoded onto image "
                              + self._input_file + ".")
 
         """
@@ -440,11 +438,11 @@ class Steganographer(object):
             except ValueError as e:
                 raise e
 
-        #create a list to get the number of bits in the message
+        # Create a list to get the number of bits in the message
         __len_list = []
 
-        #This shit...
-        #There are 32 bits (Integer presumably, Python is a little willy-nilly
+        # This shit...
+        # There are 32 bits (Integer presumably, Python is a little willy-nilly
         # on primitive types) of length data at the beginning of the encoding
         # 32/3 = 10 with 2 bits left over. So I need the first 10 pixels worth
         # of LSBs and the Red and Green LSB out of the 11th pixel. So, I
@@ -460,12 +458,12 @@ class Steganographer(object):
                         else:
                             __len_list.append(self.__image_data[widthIndex][heightIndex][colorIndex] & 1)
                             __bit_index += 1
-        except Exception as e:
+        except Exception:
             pass
-        #Now we know how many bits to expect so we convert that back into an Int and store it for later
+        # Now we know how many bits to expect so we convert that back into an Int and store it for later
         __message_length = Steganographer.bin_list_to_int(__len_list)
 
-        #I found it was easier on me to just store the entire with the length data at first.
+        # I found it was easier on me to just store the entire message with the length data at first.
         # Also, to make the encoding loop easier I padded the end of it so it would be evenly
         # divisible by the number of colors in the image. Here I will just grab everything
         # out of the picture all at once and store it in total list. Then I will use the message
@@ -473,12 +471,12 @@ class Steganographer(object):
         # silly shit in the inner for loop here to weed out the length/padding data.
         __total_list = []
 
-        #I stored the message length in characters which are 8 bits a piece. However, I work mostly
+        # I stored the message length in characters which are 8 bits a piece. However, I work mostly
         # in number of bits instead of bytes so I
         # have to convert it off of the bat.
         __message_bit_length = __message_length * 8
 
-        #Iterate through all of the bits that I believe were encoded onto the image.
+        # Iterate through all of the bits that I believe were encoded onto the image.
         try:
             __bits_processed = 0
             for heightIndex in range(0, self.__image_size[0]):
@@ -497,11 +495,9 @@ class Steganographer(object):
         except Exception as e:
             pass
 
-        #create a list to store the message bit sequence
         __message_list = []
 
-        #print(len(__total_list))
-        #Iterate from the end to the end of the message data. So the message will always start
+        # Iterate from the end to the end of the message data. So the message will always start
         # at the 33nd (decimal value 32) bit because the length data is 32 bits long. Then if the
         # message is x long we want to count from 32 to x + 32 since the message data will essentially
         # be offset in the picture by 32 bits. This also leaves out the padding data because we are
@@ -511,7 +507,7 @@ class Steganographer(object):
         for index in range(32, __message_bit_length + 32):
             __message_list.append(__total_list[index])
 
-        #Convert the message from a list of binary values do a string
+        # Convert the message from a list of binary values do a string
         __message = Steganographer.bin_list_to_message(__message_list)
 
         return __message
@@ -521,7 +517,7 @@ class Steganographer(object):
         This function will open a file, read the contents, then pass the
         contents as a message to encode_image.
 
-        Manditory Arguments:
+        Mandatory Arguments:
         filename - The name of the file containing the message.
         
         Exceptions:
@@ -548,8 +544,7 @@ class Steganographer(object):
             __message = Steganographer.read_message_from_file(filename)
         except IOError as e:
             raise e
-            return
-        
+
         try:
             self.encode_message(__message)
         except IOError as e:
@@ -580,7 +575,7 @@ class Steganographer(object):
             raise e
         except ValueError as e:
             raise e
-            
+
         try:
             Steganographer.write_message_to_file(__message, filename)
         except IOError as e:
@@ -621,13 +616,13 @@ class EncryptedSteganographer(Steganographer):
             self._recipient_public_key_filename = kwargs.pop("recipientPublicKeyFileName")
         except KeyError:
             raise KeyError("The recipientPublicKeyFileName argument is required " +
-                "to initialize an EncryptedSteganographer.")
+                           "to initialize an EncryptedSteganographer.")
         try:
             self._senders_key_pair_filename = kwargs.pop("sendersKeyPairFileName")
             self._passphrase = kwargs.pop("passphrase")
         except KeyError:
             raise KeyError("The passphrase and sendersKeyPairFileName arguments " +
-                "are required to initialize an EncryptedSteganographer")
+                           "are required to initialize an EncryptedSteganographer")
         super(EncryptedSteganographer, self).__init__(**kwargs)
 
     def encrypt_and_encode_message(self, message):
@@ -635,10 +630,8 @@ class EncryptedSteganographer(Steganographer):
         This function will encrypt a message and encode it onto an image.
         """
 
-        __message = CryptoHelper.encryptMessage(message,
-                                                self._recipient_public_key_filename,
-                                                self._senders_key_pair_filename,
-                                                self._passphrase).dumpMessage()
+        __message = CryptoHelper.encrypt_message(message, self._recipient_public_key_filename,
+                                                 self._senders_key_pair_filename, self._passphrase).dump_message()
 
         self.encode_message(__message)
 
@@ -651,10 +644,8 @@ class EncryptedSteganographer(Steganographer):
             __message = Steganographer.read_message_from_file(message_file)
         except IOError as e:
             raise e
-        __message = CryptoHelper.encryptMessage(__message,
-                                                self._recipient_public_key_filename,
-                                                self._senders_key_pair_filename,
-                                                self._passphrase).dumpMessage()
+        __message = CryptoHelper.encrypt_message(__message, self._recipient_public_key_filename,
+                                                 self._senders_key_pair_filename, self._passphrase).dump_message()
         self.encode_message(__message)
 
     def decrypt_and_decode_message(self):
@@ -668,9 +659,8 @@ class EncryptedSteganographer(Steganographer):
             __message = self.decode_message()
         except Exception as e:
             print(e)
-        __message = CryptoHelper.decryptMessage(
-            Message.loadMessage(__message), self._senders_key_pair_filename,
-            self._passphrase)
+        __message = CryptoHelper.decrypt_message(Message.load_message(__message), self._senders_key_pair_filename,
+                                                 self._passphrase)
 
         return __message
 
@@ -685,13 +675,13 @@ class EncryptedSteganographer(Steganographer):
             __message = self.decode_message()
         except Exception as e:
             raise e
-        __message = CryptoHelper.decryptMessage(
-            Message.loadMessage(__message), self._senders_key_pair_filename,
-            self._passphrase)
+        __message = CryptoHelper.decrypt_message(Message.load_message(__message), self._senders_key_pair_filename,
+                                                 self._passphrase)
         try:
             Steganographer.write_message_to_file(__message, message_file)
         except IOError as e:
             raise e
+
 
 if __name__ == "__main__":
 
@@ -700,34 +690,30 @@ if __name__ == "__main__":
     description_string += " with the appropriate arguments."
     epilog_string = "Thank you for using steganographer!"
 
-
-    #If we are being executed independently then parse the necessary arguments.
+    # If we are being executed independently then parse the necessary arguments.
     parser = argparse.ArgumentParser(description=description_string,
                                      epilog=epilog_string)
-    parser.add_argument("--inputimage","-ii",
+    parser.add_argument("--inputimage", "-ii",
                         help="The to encode the message onto or the encoded" +
-                        " image if decoding.")
+                             " image if decoding.")
     parser.add_argument("--outputimage", "-oi",
                         help="The name of the encoded image.")
     parser.add_argument("--encode", "-e", action="store_true",
                         help="Encode a message onto a picture.")
     parser.add_argument("--decode", "-d", action="store_true",
                         help="Decode the input image and write message to" +
-                        " terminal.")
+                             " terminal.")
     parser.add_argument("--crypto", action="store_true",
                         help="Use ciphered steganographer instead plaintext")
-
 
     parser.add_argument("--message", "-m",
                         help="The message to be encoded onto the picture.")
     parser.add_argument("--inputfile", "-if", help="--inputfile <filename>.")
     parser.add_argument("--outputfile", "-of",
                         help="--outputfile <filename> for decoded text.")
-
-
     parser.add_argument("--generate", "-g",
                         help="Generate a key of of size --modulus. If no" +
-                        " modulus is provided then 2048 will be used.")
+                             " modulus is provided then 2048 will be used.")
     parser.add_argument("--encryptionkey", "-ec",
                         help="The asymmetric key to use for encrypting.")
     parser.add_argument("--signingkey", "-sk",
@@ -735,7 +721,6 @@ if __name__ == "__main__":
     parser.add_argument("--passphrase", "-p",
                         help="The passphrase to the singing key.")
     parser.add_argument("--modulus", "-md", help="Key modulus size.")
-
 
     parser.add_argument("--comparefiles", "-c",
                         help="Read back the first 512 pixels of an image.")
@@ -754,22 +739,21 @@ if __name__ == "__main__":
             CryptoHelper.generateKeys(args.generate, args.passphrase)
     elif args.encode:
         if args.crypto:
-            if (not args.inputimage or not args.outputimage
-                or not(args.message or args.inputfile) or not
-                args.encryptionkey or not args.signingkey or not args.passphrase):
+            if (not args.inputimage or not args.outputimage or not (args.message or args.inputfile) or not
+                    args.encryptionkey or not args.signingkey or not args.passphrase):
                 try:
                     steg = EncryptedSteganographer(inputFile=args.inputimage,
-                                                outputfile=args.outputimage,
-                                                recipientPublicKeyFileName=args.encryptionkey,
-                                                sendersKeyPairFileName=args.signingkey,
-                                                passphrase=args.passphrase)
+                                                   outputfile=args.outputimage,
+                                                   recipientPublicKeyFileName=args.encryptionkey,
+                                                   sendersKeyPairFileName=args.signingkey,
+                                                   passphrase=args.passphrase)
                 except KeyError as e:
                     print("The following error has occured: ")
                     print(e)
                     exit(1)
                 try:
                     if args.inputfile:
-                       steg.encrypt_and_encode_message_from_file(args.inputfile)
+                        steg.encrypt_and_encode_message_from_file(args.inputfile)
                     else:
                         steg.encrypt_and_encode_message(args.message)
                 except IOError as e:
@@ -781,30 +765,29 @@ if __name__ == "__main__":
                 args.print_help()
         else:
             if (not args.inputimage or not args.outputimage
-                or not(args.message or args.inputfile)):
-                    try:
-                        steg = Steganographer(inputFile=args.inputimage,
-                                              outputFile=args.outputimage)
-                    except KeyError as e:
-                        print("The following error occured: ")
-                        print(e)
-                        exit(1)
-                    try:
-                        if args.inputfile:
-                            steg.encode_message_from_file(args.inputfile)
-                        else:
-                            steg.encode_message(args.message)
-                    except IOError as e:
-                        print("The following error occured: ")
-                        print(e)
-                        exit(1)
+                    or not (args.message or args.inputfile)):
+                try:
+                    steg = Steganographer(inputFile=args.inputimage,
+                                          outputFile=args.outputimage)
+                except KeyError as e:
+                    print("The following error occured: ")
+                    print(e)
+                    exit(1)
+                try:
+                    if args.inputfile:
+                        steg.encode_message_from_file(args.inputfile)
+                    else:
+                        steg.encode_message(args.message)
+                except IOError as e:
+                    print("The following error occured: ")
+                    print(e)
+                    exit(1)
             else:
                 args.print_help()
     elif args.decode:
         if args.crypto:
-            if (not args.inputimage or not args.outputimage
-                or not args.encryptionkey or not args.signingkey 
-                or not args.passphrase):
+            if (not args.inputimage or not args.outputimage or not args.encryptionkey or not
+                    args.signingkey or not args.passphrase):
                 try:
                     steg = EncryptedSteganographer(inputFile=args.inputimage,
                                                    recipientPublicKeyFileName=args.encryptionkey,
@@ -818,7 +801,7 @@ if __name__ == "__main__":
                     if args.outputfile:
                         steg.decrypt_and_decode_message_to_file(args.outputfile)
                         print("Message successfully written to " +
-                               args.outputfile + ".")
+                              args.outputfile + ".")
                         exit(0)
                     else:
                         print("Message:\n")
@@ -832,7 +815,7 @@ if __name__ == "__main__":
                 args.print_help()
                 exit(1)
         else:
-            if (not args.inputimage or not args.outputimage):
+            if not args.inputimage or not args.outputimage:
                 try:
                     steg = Steganographer(inputFile=args.inputimage)
                 except KeyError as e:
@@ -843,7 +826,7 @@ if __name__ == "__main__":
                     if args.outputfile:
                         steg.decode_message_to_file(args.outputfile)
                         print("Message successfully written to " +
-                               args.outputfile + ".")
+                              args.outputfile + ".")
                         exit(0)
                     else:
                         print("Message:\n")
@@ -860,5 +843,5 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
-    #Things went better than expected
+    # Things went better than expected
     exit(0)

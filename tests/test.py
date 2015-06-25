@@ -36,7 +36,7 @@ my_hash = SHA256.new()
 try:
     my_hash.update(open(output_file_name, 'r').read())
 except IOError as e:
-    print("Couldn't open the outputed text file. Permissions?")
+    print("Couldn't open the outputted text file. Permissions?")
     exit(1)
     
 computed_hash = my_hash.hexdigest()
@@ -94,7 +94,7 @@ if computed_hash != expected_hash:
     print("Computed: " + computed_hash)
     exit(1)
 else:
-    print("The outputed file matches the stored hash! Encrypted direct file functions work!")
+    print("The outputted file matches the stored hash! Encrypted direct file functions work!")
 
 print("The library is functioning properly!")
 

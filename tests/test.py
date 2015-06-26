@@ -8,7 +8,7 @@ from message import CryptoHelper
 # These are the values that should be expected based on explicit test cases.
 pt_message = "The quick brown fox jumped over the lazy dog."
 output_file_name = "text_message_output.txt"
-output_image_file_name = "message_output_pciture.png"
+output_image_file_name = "message_output_picture.png"
 expected_hash = "6bb6c84384cffedb4529ccc23c635e7134a6bff6c0222e8806c28683cdb3559c"
 key_file = "test_key.pem"
 pubkey_file = "test_key_publiconly.pem"

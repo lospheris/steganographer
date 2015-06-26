@@ -102,3 +102,11 @@ atlassian-ide-plugin.xml
 com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
+
+# Make sure not to accidentally upload any of the test files.
+tests/text_message_output.txt
+tests/message_output_picture.png
+tests/test_key.pem
+tests/test_key_publiconly.pem
+tests/encrypted_text_message_output.txt
+tests/encrypted_message_output_picture.png

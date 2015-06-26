@@ -210,13 +210,13 @@ class Steganographer(object):
             for heightIndex in range(0, __oim.size[1]):
                 for widthIndex in range(0, __oim.size[0]):
                     if __pixelIndex >= pixels:
-                        raise Exception("Done!")
+                        raise LoopComplete("Done!")
                     else:
                         print(str(__pixelIndex) + ": " +
                               str(__oimd[widthIndex][heightIndex]) + " --> " +
                               str(__nimd[widthIndex][heightIndex]))
                         __pixelIndex += 1
-        except Exception:
+        except LoopComplete:
             pass
         __oim.close()
         __nim.close()
@@ -400,7 +400,7 @@ class Steganographer(object):
                     for colorIndex in range(0, self.__color_size):
 
                         if __bitIndex >= len(__bit_sequence):
-                            raise Exception("Done!")
+                            raise LoopComplete("Done!")
                         else:
                             __bitList[colorIndex] = Steganographer.set_bit(
                                 self.__image_data[widthIndex][heightIndex][colorIndex],
@@ -410,7 +410,7 @@ class Steganographer(object):
 
                     self.__image_data[widthIndex][heightIndex] = __bitList
                     __bitList = [0, 0, 0]
-        except Exception:
+        except LoopComplete:
             pass
         try:
             self.save_output_image()
@@ -454,11 +454,11 @@ class Steganographer(object):
                 for widthIndex in range(0, self.__image_size[1]):
                     for colorIndex in range(0, self.__color_size):
                         if __bit_index >= 32:
-                            raise Exception("Done!")
+                            raise LoopComplete("Done!")
                         else:
                             __len_list.append(self.__image_data[widthIndex][heightIndex][colorIndex] & 1)
                             __bit_index += 1
-        except Exception:
+        except LoopComplete:
             pass
         # Now we know how many bits to expect so we convert that back into an Int and store it for later
         __message_length = Steganographer.bin_list_to_int(__len_list)
@@ -486,13 +486,13 @@ class Steganographer(object):
                     for colorIndex in range(0, self.__color_size):
 
                         if __bits_processed >= (__message_bit_length + 32):
-                            raise Exception("Done!")
+                            raise LoopComplete("Done!")
                         else:
                             __total_list.append(
                                 self.__image_data[widthIndex][heightIndex][colorIndex] & 1)
                             __bits_processed += 1
 
-        except Exception as e:
+        except LoopComplete as e:
             pass
 
         __message_list = []
@@ -519,7 +519,7 @@ class Steganographer(object):
 
         Mandatory Arguments:
         filename - The name of the file containing the message.
-        
+
         Exceptions:
         IOError -- Raised from read_message_from_file if the message file 
             cannot be read.
@@ -733,14 +733,14 @@ if __name__ == "__main__":
             print("A passphrase for the key must be provided.")
             exit(1)
         elif args.modulus:
-            CryptoHelper.generateKeys(args.generate, args.passphrase,
-                                      args.modulus)
+            CryptoHelper.generate_keys(args.generate, args.passphrase,
+                                       args.modulus)
         else:
-            CryptoHelper.generateKeys(args.generate, args.passphrase)
+            CryptoHelper.generate_keys(args.generate, args.passphrase)
     elif args.encode:
         if args.crypto:
             if (not args.inputimage or not args.outputimage or not (args.message or args.inputfile) or not
-                    args.encryptionkey or not args.signingkey or not args.passphrase):
+            args.encryptionkey or not args.signingkey or not args.passphrase):
                 try:
                     steg = EncryptedSteganographer(inputFile=args.inputimage,
                                                    outputfile=args.outputimage,
@@ -765,7 +765,7 @@ if __name__ == "__main__":
                 args.print_help()
         else:
             if (not args.inputimage or not args.outputimage
-                    or not (args.message or args.inputfile)):
+                or not (args.message or args.inputfile)):
                 try:
                     steg = Steganographer(inputFile=args.inputimage,
                                           outputFile=args.outputimage)
@@ -787,7 +787,7 @@ if __name__ == "__main__":
     elif args.decode:
         if args.crypto:
             if (not args.inputimage or not args.outputimage or not args.encryptionkey or not
-                    args.signingkey or not args.passphrase):
+            args.signingkey or not args.passphrase):
                 try:
                     steg = EncryptedSteganographer(inputFile=args.inputimage,
                                                    recipientPublicKeyFileName=args.encryptionkey,
@@ -845,3 +845,12 @@ if __name__ == "__main__":
 
     # Things went better than expected
     exit(0)
+
+"""
+This Exception is used in the code to break out of nested loops easily. I don't know if this is really considered
+good design but it sure simplifies the code in my opinion.
+"""
+
+
+class LoopComplete(Exception):
+    pass

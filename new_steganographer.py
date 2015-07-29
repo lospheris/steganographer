@@ -41,123 +41,49 @@ class Steganographer(object):
 
     # Static Methods
     @staticmethod
-    def int_to_bin_list(number):
-        """
-        Return the least significant 32 bits of a number as a list.
+    def triple_to_int( triple ):
 
-        Mandatory Arguments:
-        number -- The number you would like returned as a list.
-        """
-
-        list_value = []
-        for i in reversed(range(32)):
-            """
-            Iterate through the last 32 bits of the number passed. I single out
-            each bit by bit shifting the number 1 (essentially a bit mask here)
-            left by the current index then bitwise anding that against the
-            original number. That gives me the value of that position then I
-            shift it back by the index to make sure that the bit only occupies
-            the 1 bit. If you don't do that last part then python with
-            interpret it as whatever value that bit place holds. ie if it was
-            the 8 bit and it was set then you will get 8 instead of 1.
-            """
-            list_value += [((1 << i) & number) >> i]
-        return list_value
-
+        __return_int = 0
+        if len(triple) != 3:
+                raise ValueError("The touple provided has too many elements!")
+        for character in triple:
+                __return_int |= ord(character)
+                if character == triple[2]:
+                        break
+                else:
+                        __return_int = __return_int << 8
+        if sys.getsizeof(__return_int) > 24:
+                raise ValueError("Something has caused the output integer to be too large!")
+        return __return_int
+    
     @staticmethod
-    def bin_list_to_int(bin_list):
-        """
-        Returns the integer value of a binary list.
+    def int_to_triple( integer ):
 
-        Mandatory Arguments:
-        binList -- A list of 1s and 0s to be assembled back into an integer.
-        """
-
-        int_value = 0
-        for i in range(32):
-            """
-            This is pretty simple. You just get the value from the current
-            index. Which should only be a 1 or a 0. Then shift it left by the
-            index. Lastly you add the number created by the shift to the
-            current value.
-            """
-            int_value += bin_list[31 - i] << i
-        return int_value
-
+        return (chr((integer&0xFF0000)>>16), chr((integer&0x00FF00)>>8), chr((integer&0x0000FF)))
+    
     @staticmethod
-    def char_to_bin_list(char):
-        """
-        Return a list of 1s and 0s representing the binary of a character.
+    def string_to_int_list( input_string ):
+        
+        # Pad the string to make sure it fits evenly into integers
+        input_string += "=" * (len(input_string)%3)
 
-        Mandatory Arguments:
-        char -- A character to be broken down into a list.
-        """
+         __int_list = []
 
-        int_value = ord(char)
-        list_value = []
-
-        for i in reversed(range(8)):
-            list_value += [((1 << i) & int_value) >> i]
-
-        return list_value
-
+        for index in range(0, len(input_string)/3):
+            proper_index = index*3
+            __int_list.append(triple_to_int((input_string[proper_index], input_string[proper_index+1], input_string[proper_index+2])))
+        
+        return __int_list
     @staticmethod
-    def bin_list_to_char(bin_list):
-        """
-        Take a binary List and turn it back into a char.
-
-        Mandatory Arguments:
-        binList -- A list of 1s and 0s to be back into a char.
-        """
-        int_value = 0
-
-        for i in range(8):
-            int_value += bin_list[7 - i] << i
-        return chr(int_value)
-
-    @staticmethod
-    def message_to_bin_list(message):
-        """
-        Takes a message and turns it into a binary list
-
-        Mandatory Arguments:
-        message -- A string to be broken down into a list of binary values.
-        """
-
-        list_value = []
-        for character in message:
-            list_value += Steganographer.char_to_bin_list(character)
-        return list_value
-
-    @staticmethod
-    def bin_list_to_message(bin_list):
-        """
-        This turns a binary list back into a message.
-
-        Mandatory Arguments:
-        binList -- A list of 1s and 0s to be converted back into a string.
-            Must be divisible by 8.
-            
-        Exceptions:
-        ValueError -- This will be raised if the input bit_list is not evenly
-            divisable by 8. 
-        """
-
-        if (len(bin_list) % 8) is not 0:
-            raise ValueError("The input list is required to be evenly divisable by 8")
-
-        list_tmp = []
-        bit_counter = 0
-        message = ""
-        for value in range(0, len(bin_list)):
-            list_tmp.append(bin_list[value])
-            if bit_counter == 7:
-                message += Steganographer.bin_list_to_char(list_tmp)
-                list_tmp = []
-                bit_counter = -1
-            bit_counter += 1
-        return message
-
+    def int_list_to_string( input_list ):
+        
+        __return_string = ""
+        for integer in input_list:
+            __char_tuple = int_to_triple(integer)
+            __return_string += __char_tuple[0] + __char_tuple[1] + __char_tuple[2]
+        
+        return __return_string
+                                                                                                                                      
     # I "Borrowed" this wholesale from stack exchange
     @staticmethod
     def set_bit(v, index, x):
@@ -356,9 +282,6 @@ class Steganographer(object):
 
         __message = message
         # Error Handling
-        if self._output_file == "":
-            raise ValueError("No output filename specified. Please specify"
-                             + " a filename and call encode_image() again.")
         if self.__image_data.shape == (1, 1, 1):
             """Uninitialized image or smallest image ever."""
             try:

@@ -1,6 +1,7 @@
+#!/usr/bin/python
 import sys
 import os
-sys.path.append("..")
+sys.path.append('..')
 from steganographer import *
 from Crypto.Hash import SHA256
 from message import CryptoHelper

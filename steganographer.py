@@ -1,14 +1,14 @@
 #!/usr/bin/python
 __author__ = "Dell-Ray Sackett"
-__version__ = "0.6"
+__version__ = "0.9.0"
 import argparse
 
 from PIL import Image
 import numpy
-
+from bitarray import bitarray
 from message import Message
 from message import CryptoHelper
-
+from Crypto import Random
 
 class Steganographer(object):
     """
@@ -31,7 +31,6 @@ class Steganographer(object):
         self.__color_size = 0
         self.__image_size = (0, 0)
         self.__max_bits_storable = 0
-
         if kwargs:
             for arg in kwargs:
                 if arg is "inputFile":
@@ -49,7 +48,7 @@ class Steganographer(object):
         number -- The number you would like returned as a list.
         """
 
-        list_value = []
+        list_value = bitarray()
         for i in reversed(range(32)):
             """
             Iterate through the last 32 bits of the number passed. I single out
@@ -61,7 +60,7 @@ class Steganographer(object):
             interpret it as whatever value that bit place holds. ie if it was
             the 8 bit and it was set then you will get 8 instead of 1.
             """
-            list_value += [((1 << i) & number) >> i]
+            list_value.append(((1 << i) & number) >> i)
         return list_value
 
     @staticmethod
@@ -94,10 +93,10 @@ class Steganographer(object):
         """
 
         int_value = ord(char)
-        list_value = []
-
+        list_value = bitarray()
+        
         for i in reversed(range(8)):
-            list_value += [((1 << i) & int_value) >> i]
+            list_value.append(((1 << i) & int_value) >> i)
 
         return list_value
 
@@ -124,7 +123,7 @@ class Steganographer(object):
         message -- A string to be broken down into a list of binary values.
         """
 
-        list_value = []
+        list_value = bitarray()
         for character in message:
             list_value += Steganographer.char_to_bin_list(character)
         return list_value
@@ -143,17 +142,17 @@ class Steganographer(object):
             divisable by 8. 
         """
 
-        if (len(bin_list) % 8) is not 0:
+        if (bin_list.length() % 8) != 0:
             raise ValueError("The input list is required to be evenly divisable by 8")
 
-        list_tmp = []
+        list_tmp = bitarray()
         bit_counter = 0
         message = ""
-        for value in range(0, len(bin_list)):
+        for value in range(0, bin_list.length()):
             list_tmp.append(bin_list[value])
             if bit_counter == 7:
                 message += Steganographer.bin_list_to_char(list_tmp)
-                list_tmp = []
+                list_tmp = bitarray()
                 bit_counter = -1
             bit_counter += 1
         return message
@@ -220,6 +219,32 @@ class Steganographer(object):
             pass
         __oim.close()
         __nim.close()
+    
+    @staticmethod
+    def create_random_image(width=1920, height=1080, depth=3, name="random_image.png"):
+        """
+        Creates an image widthxheightxdepth with the name, specified by name.
+
+        Manditory Arguments:
+        width -- The desired width
+        height -- The desired height
+        depth -- The desired pixel depth
+        name -- the desired name
+        """
+
+        rng = Random.new()
+        data = numpy.zeros((height, width, depth), dtype=numpt.uint8)
+        for h in range(height):
+            for w in range(width):
+                for color in range(depth):
+                    data[h][w][color] = ord(rng.read(1))
+        
+        image = Image.fromarray(data, 'RGB')
+        
+        if name[len(name)-4:] != ".png":
+            image.save(name + ".png")
+        else:
+            image.save(name)
 
     @staticmethod
     def read_message_from_file(filename):
@@ -370,16 +395,17 @@ class Steganographer(object):
         if __message == "":
             raise ValueError("Message not set. Please set message and"
                              + " call encode_image() again.")
-
+        
+        __bit_sequence = bitarray()
         __bit_sequence = Steganographer.int_to_bin_list(len(__message))
         __bit_sequence += Steganographer.message_to_bin_list(__message)
-
+        
         # Pad the message
-        __padSize = self.__color_size - (len(__bit_sequence) % self.__color_size)
+        __padSize = self.__color_size - (__bit_sequence.length() % self.__color_size)
         for i in range(0, __padSize):
-            __bit_sequence += [0]
+            __bit_sequence.append(0)
 
-        if len(__bit_sequence) >= self.__max_bits_storable:
+        if __bit_sequence.length() >= self.__max_bits_storable:
             raise ValueError("The message or message file provided was too "
                              + "large to be encoded onto image "
                              + self._input_file + ".")
@@ -439,7 +465,7 @@ class Steganographer(object):
                 raise e
 
         # Create a list to get the number of bits in the message
-        __len_list = []
+        __len_list = bitarray()
 
         # This shit...
         # There are 32 bits (Integer presumably, Python is a little willy-nilly
@@ -469,13 +495,13 @@ class Steganographer(object):
         # out of the picture all at once and store it in total list. Then I will use the message
         # length information to iterate through only the message bits so I don't have to do any
         # silly shit in the inner for loop here to weed out the length/padding data.
-        __total_list = []
+        __total_list = bitarray()
 
         # I stored the message length in characters which are 8 bits a piece. However, I work mostly
         # in number of bits instead of bytes so I
         # have to convert it off of the bat.
         __message_bit_length = __message_length * 8
-
+        
         # Iterate through all of the bits that I believe were encoded onto the image.
         try:
             __bits_processed = 0
@@ -495,7 +521,7 @@ class Steganographer(object):
         except LoopComplete as e:
             pass
 
-        __message_list = []
+        __message_list = bitarray()
 
         # Iterate from the end to the end of the message data. So the message will always start
         # at the 33nd (decimal value 32) bit because the length data is 32 bits long. Then if the
@@ -509,7 +535,7 @@ class Steganographer(object):
 
         # Convert the message from a list of binary values do a string
         __message = Steganographer.bin_list_to_message(__message_list)
-
+        
         return __message
 
     def encode_message_from_file(self, filename):
